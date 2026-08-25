@@ -17,6 +17,14 @@ cmd = '/assets/start.sh'
 "start.sh" = '''
 #!/bin/bash
 
+# Ensure all required storage subdirectories and bootstrap cache exist
+mkdir -p /app/storage/framework/cache/data \
+         /app/storage/framework/sessions \
+         /app/storage/framework/views \
+         /app/storage/app/public \
+         /app/storage/logs \
+         /app/bootstrap/cache
+
 # Ensure storage and bootstrap cache are writable by www-data
 chown -R www-data:www-data /app/storage /app/bootstrap/cache
 chmod -R 775 /app/storage /app/bootstrap/cache
