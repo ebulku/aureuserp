@@ -16,6 +16,11 @@ class Help extends Page
 
     protected static ?int $navigationSort = 1;
 
+    public static function canAccess(): bool
+    {
+        return false;
+    }
+
     public static function getNavigationLabel(): string
     {
         return __('support::filament/pages/help.navigation.label');
