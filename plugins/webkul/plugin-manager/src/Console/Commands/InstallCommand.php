@@ -75,7 +75,7 @@ class InstallCommand extends Command
 
                     $this->newLine();
 
-                    $this->call($dependency.':install');
+                    $this->call($dependency.':install', ['--no-interaction' => true]);
                 }
 
                 $this->newLine();
@@ -104,7 +104,7 @@ class InstallCommand extends Command
 
                 $this->newLine();
 
-                $this->call($dependency.':install');
+                $this->call($dependency.':install', ['--no-interaction' => true]);
             }
 
             $this->newLine();
@@ -269,7 +269,8 @@ class InstallCommand extends Command
             $this->info("⚙️ Running <comment>{$this->package->shortName()}</comment> database migrations...");
 
             $this->call('migrate', [
-                '--path' => $migrationsToRun->toArray(),
+                '--path'  => $migrationsToRun->toArray(),
+                '--force' => true,
             ]);
 
             $this->info("✅ Migrations <comment>{$this->package->shortName()}</comment> completed successfully.");
@@ -295,7 +296,8 @@ class InstallCommand extends Command
             $this->info("⚙️ Running <comment>{$this->package->shortName()}</comment> settings database migrations...");
 
             $this->call('migrate', [
-                '--path' => $settingsToRun->toArray(),
+                '--path'  => $settingsToRun->toArray(),
+                '--force' => true,
             ]);
 
             $this->info("✅ Settings migrations <comment>{$this->package->shortName()}</comment> completed successfully.");
@@ -337,6 +339,7 @@ class InstallCommand extends Command
         foreach ($this->package->seederClasses as $seeder) {
             $this->call('db:seed', [
                 '--class' => $seeder,
+                '--force' => true,
             ]);
         }
 
