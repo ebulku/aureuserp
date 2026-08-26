@@ -124,9 +124,11 @@ pm.min_spare_servers = 2
 pm.max_spare_servers = 6
 pm.max_requests = 500
 clear_env = no
-php_admin_value[memory_limit] = 256M
+php_admin_value[max_execution_time] = 360
+php_admin_value[memory_limit] = 4G
 php_admin_value[post_max_size] = 50M
 php_admin_value[upload_max_filesize] = 50M
+php_admin_value[date.timezone] = "America/New_York"
 '''
 
 "nginx.template.conf" = '''
