@@ -86,7 +86,8 @@ class OrderForm
                                     ->relationship(
                                         'partner',
                                         'name',
-                                        modifyQueryUsing: fn (Builder $query) => $query->orderBy('id')->withTrashed()
+                                        modifyQueryUsing: fn (Builder $query, $state) => $query->orderBy('id')->withTrashed()
+                                            ->where(hide_deleted_unless_selected($state))
                                     )
                                     ->getOptionLabelFromRecordUsing(function ($record): string {
                                         return $record->name.($record->trashed() ? ' (Deleted)' : '');
@@ -246,7 +247,8 @@ class OrderForm
                                             ->relationship(
                                                 'company',
                                                 'name',
-                                                modifyQueryUsing: fn (Builder $query) => $query->withTrashed(),
+                                                modifyQueryUsing: fn (Builder $query, $state) => $query->withTrashed()
+                                                    ->where(hide_deleted_unless_selected($state)),
                                             )
                                             ->getOptionLabelFromRecordUsing(function ($record): string {
                                                 return $record->name.($record->trashed() ? ' (Deleted)' : '');
@@ -440,15 +442,9 @@ class OrderForm
                     ->relationship(
                         'product',
                         'name',
-                        fn (Builder $query, Get $get, ?string $state) => $query
+                        fn (Builder $query, Get $get, $state) => $query
                             ->withTrashed()
-                            ->where(function (Builder $q) use ($state) {
-                                $q->whereNull('deleted_at');
-
-                                if (filled($state)) {
-                                    $q->orWhere('id', $state);
-                                }
-                            })
+                            ->where(hide_deleted_unless_selected($state))
                             ->where('type', ProductType::GOODS)
                             ->whereNull('is_configurable')
                             ->where(owned_by_company($get('../../company_id'))),
@@ -662,7 +658,8 @@ class OrderForm
                     ->default(0),
 
                 Hidden::make('from_requisition')
-                    ->default(false),
+                    ->default(false)
+                    ->dehydrated(false),
             ])
             ->mutateRelationshipDataBeforeCreateUsing(function (array $data, $record) {
                 $product = Product::find($data['product_id']);
@@ -881,7 +878,7 @@ class OrderForm
 
         return static::convertPrice(
             $product->cost ?: $product->price,
-            Company::find($companyId)?->currency_id,
+            default_currency_id(),
             $currencyId,
             $companyId
         );

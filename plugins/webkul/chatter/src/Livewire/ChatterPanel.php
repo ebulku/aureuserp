@@ -169,7 +169,8 @@ class ChatterPanel extends Component implements HasActions, HasForms, HasInfolis
         return FileAction::make('file')
             ->visible($this->isFileActionVisible)
             ->hiddenLabel()
-            ->record($this->record);
+            ->record($this->record)
+            ->size('sm');
     }
 
     public function followerAction(): FollowerAction
@@ -178,7 +179,8 @@ class ChatterPanel extends Component implements HasActions, HasForms, HasInfolis
             ->visible($this->isFollowerActionVisible)
             ->setFollowerMailView($this->followerMailViewPath)
             ->setResource($this->resourceClass)
-            ->record($this->record);
+            ->record($this->record)
+            ->size('sm');
     }
 
     public function removeFollower($partnerId)
@@ -198,7 +200,8 @@ class ChatterPanel extends Component implements HasActions, HasForms, HasInfolis
     public function filtersAction(): FiltersAction
     {
         return FiltersAction::make('filters')
-            ->visible(fn () => $this->tab === 'messages');
+            ->visible(fn () => $this->tab === 'messages')
+            ->size('sm');
     }
 
     protected function normalizeActivityPlans(mixed $activityPlans): Collection
@@ -618,7 +621,7 @@ class ChatterPanel extends Component implements HasActions, HasForms, HasInfolis
                                 ->mentions([ChatterMentions::provider()])
                                 ->hidden(fn (Get $get) => $get('activity_type_id') ? ActivityType::find($get('activity_type_id'))?->category == 'meeting' : false)
                                 ->visible(fn (Get $get) => ! $get('activity_plan_id'))
-                                ->label(__('chatter::app.filament.actions.chatter.activity.form.type-your-message-here'))
+                                ->placeholder(__('chatter::livewire/chatter-panel.edit-activity.form.fields.message-placeholder'))
                                 ->visible(fn (Get $get) => ! $get('activity_plan_id')),
                             Hidden::make('type')
                                 ->default('activity'),

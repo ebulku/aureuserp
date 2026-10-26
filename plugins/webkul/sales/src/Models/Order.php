@@ -21,6 +21,7 @@ use Webkul\Inventory\Models\Operation;
 use Webkul\Inventory\Models\ProcurementGroup;
 use Webkul\Inventory\Models\Warehouse;
 use Webkul\PluginManager\Package;
+use Webkul\Product\Models\PriceList;
 use Webkul\Sale\Database\Factories\OrderFactory;
 use Webkul\Sale\Enums\InvoiceStatus;
 use Webkul\Sale\Enums\OrderDeliveryStatus;
@@ -87,6 +88,7 @@ class Order extends Model
         'amount_total',
         'warehouse_id',
         'procurement_group_id',
+        'price_list_id',
     ];
 
     protected $casts = [
@@ -130,9 +132,19 @@ class Order extends Model
         return $this->belongsTo(Company::class)->withTrashed();
     }
 
+    public function orderLines()
+    {
+        return $this->hasMany(OrderLine::class, 'order_id');
+    }
+
     public function partner()
     {
         return $this->belongsTo(Partner::class);
+    }
+
+    public function priceList()
+    {
+        return $this->belongsTo(PriceList::class, 'price_list_id');
     }
 
     public function getQtyToInvoiceAttribute()
@@ -288,6 +300,8 @@ class Order extends Model
         });
 
         static::saving(function ($order) {
+            $order->computeCurrencyId();
+
             $order->updateName();
 
             $order->lines->each->update(['state' => $order->state]);
@@ -308,6 +322,31 @@ class Order extends Model
             return $resource::getUrl('view', ['record' => $this->getKey()], panel: 'admin');
         } catch (Throwable $e) {
             return '';
+        }
+    }
+
+    public function computeCurrencyId(): void
+    {
+        $priceListCurrencyId = $this->price_list_id
+            ? PriceList::query()->whereKey($this->price_list_id)->value('currency_id')
+            : null;
+
+        $companyCurrencyId = Company::query()->whereKey($this->company_id)->value('currency_id');
+
+        $this->currency_id = $priceListCurrencyId
+            ?? $companyCurrencyId
+            ?? $this->currency_id
+            ?? default_currency_id();
+
+        if ($companyCurrencyId && $this->currency_id && (int) $this->currency_id !== (int) $companyCurrencyId) {
+            $companyCurrency = Currency::find($companyCurrencyId);
+            $orderCurrency   = Currency::find($this->currency_id);
+
+            $this->currency_rate = ($companyCurrency && $orderCurrency)
+                ? (float) $orderCurrency->getConversionRate($companyCurrency, $orderCurrency)
+                : 1.0;
+        } else {
+            $this->currency_rate = 1.0;
         }
     }
 

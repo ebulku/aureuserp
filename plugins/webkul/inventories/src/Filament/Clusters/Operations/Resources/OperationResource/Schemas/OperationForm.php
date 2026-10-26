@@ -90,7 +90,8 @@ class OperationForm
                             ->relationship(
                                 name: 'partner',
                                 titleAttribute: 'name',
-                                modifyQueryUsing: fn (Builder $query) => $query->withTrashed()
+                                modifyQueryUsing: fn (Builder $query, $state) => $query->withTrashed()
+                                    ->where(hide_deleted_unless_selected($state))
                             )
                             ->getOptionLabelFromRecordUsing(function ($record): string {
                                 return $record->name.($record->trashed() ? ' (Deleted)' : '');
@@ -122,7 +123,7 @@ class OperationForm
                             ->relationship(
                                 name: 'operationType',
                                 titleAttribute: 'name',
-                                modifyQueryUsing: fn (Builder $query) => $query->withTrashed()->whereIn('type', [
+                                modifyQueryUsing: fn (Builder $query, $state) => $query->withTrashed()->where(hide_deleted_unless_selected($state))->whereIn('type', [
                                     Enums\OperationType::INCOMING,
                                     Enums\OperationType::OUTGOING,
                                     Enums\OperationType::INTERNAL,
@@ -155,8 +156,9 @@ class OperationForm
                             ->relationship(
                                 'sourceLocation',
                                 'full_name',
-                                modifyQueryUsing: fn (Builder $query, Get $get) => $query
+                                modifyQueryUsing: fn (Builder $query, Get $get, $state) => $query
                                     ->withTrashed()
+                                    ->where(hide_deleted_unless_selected($state))
                                     ->where(owned_by_company(static::companyIdFor($get))),
                             )
                             ->getOptionLabelFromRecordUsing(function ($record): string {
@@ -175,8 +177,9 @@ class OperationForm
                             ->relationship(
                                 'destinationLocation',
                                 'full_name',
-                                modifyQueryUsing: fn (Builder $query, Get $get) => $query
+                                modifyQueryUsing: fn (Builder $query, Get $get, $state) => $query
                                     ->withTrashed()
+                                    ->where(hide_deleted_unless_selected($state))
                                     ->where(owned_by_company(static::companyIdFor($get))),
                             )
                             ->getOptionLabelFromRecordUsing(function ($record): string {
@@ -342,15 +345,9 @@ class OperationForm
                     ->relationship(
                         name: 'product',
                         titleAttribute: 'name',
-                        modifyQueryUsing: fn (Builder $query, Get $get, ?string $state) => $query
+                        modifyQueryUsing: fn (Builder $query, Get $get, $state) => $query
                             ->withTrashed()
-                            ->where(function (Builder $q) use ($state) {
-                                $q->whereNull('deleted_at');
-
-                                if (filled($state)) {
-                                    $q->orWhere('id', $state);
-                                }
-                            })
+                            ->where(hide_deleted_unless_selected($state))
                             ->where('type', ProductType::GOODS)
                             ->whereNull('is_configurable')
                             ->where(owned_by_company(static::companyIdFor($get, '../../'))),
@@ -393,7 +390,8 @@ class OperationForm
                     ->relationship(
                         'finalLocation',
                         'full_name',
-                        modifyQueryUsing: fn (Builder $query) => $query->withTrashed(),
+                        modifyQueryUsing: fn (Builder $query, $state) => $query->withTrashed()
+                            ->where(hide_deleted_unless_selected($state)),
                     )
                     ->getOptionLabelFromRecordUsing(function ($record): string {
                         return $record->full_name.($record->trashed() ? ' (Deleted)' : '');
@@ -525,6 +523,7 @@ class OperationForm
                         fn (array $arguments, Get $get): bool => filled($get("moves.{$arguments['item']}.product_id"))
                     ),
             ])
+            ->deleteAction(fn (Action $action) => $action->requiresConfirmation())
             ->deletable(fn ($record): bool => ! in_array($record?->state, [OperationState::DONE, OperationState::CANCELED]))
             ->addable(fn ($record): bool => ! in_array($record?->state, [OperationState::DONE, OperationState::CANCELED]));
     }
@@ -535,7 +534,17 @@ class OperationForm
             ->icon('heroicon-m-bars-4')
             ->label(__('inventories::filament/clusters/operations/resources/operation.form.tabs.operations.fields.lines.modal-heading'))
             ->modalSubmitActionLabel(__('inventories::filament/clusters/operations/resources/operation.form.tabs.operations.fields.lines.modal-submit-action-label'))
-            ->visible(OperationResource::getWarehouseSettings()->enable_locations)
+            ->visible(
+                OperationResource::getWarehouseSettings()->enable_locations
+                    || (
+                        OperationResource::getTraceabilitySettings()->enable_lots_serial_numbers
+                        && $move->product !== null
+                        && (
+                            $move->product->tracking == ProductTracking::LOT
+                            || $move->product->tracking == ProductTracking::SERIAL
+                        )
+                    )
+            )
             ->schema([
                 Actions::make([
                     Action::make('generateLots')
@@ -656,7 +665,8 @@ class OperationForm
                             ),
                         TableColumn::make('destination_location_id')
                             ->label(__('inventories::filament/clusters/operations/resources/operation.form.tabs.operations.fields.lines.fields.location'))
-                            ->markAsRequired(),
+                            ->markAsRequired()
+                            ->visible(OperationResource::getWarehouseSettings()->enable_locations),
                         TableColumn::make('result_package_id')
                             ->label(__('inventories::filament/clusters/operations/resources/operation.form.tabs.operations.fields.lines.fields.package'))
                             ->visible(OperationResource::getOperationSettings()->enable_packages),
@@ -781,8 +791,9 @@ class OperationForm
                             ->relationship(
                                 name: 'destinationLocation',
                                 titleAttribute: 'full_name',
-                                modifyQueryUsing: fn (Builder $query) => $query
+                                modifyQueryUsing: fn (Builder $query, $state) => $query
                                     ->withTrashed()
+                                    ->where(hide_deleted_unless_selected($state))
                                     ->where(function ($query) use ($move) {
                                         $query->where('id', $move->destination_location_id)
                                             ->orWhere('parent_id', $move->destination_location_id);
@@ -801,6 +812,7 @@ class OperationForm
                             ->afterStateUpdated(function (Set $set) {
                                 $set('result_package_id', null);
                             })
+                            ->visible(OperationResource::getWarehouseSettings()->enable_locations)
                             ->disabled(fn (): bool => in_array($move->state, [MoveState::DONE, MoveState::CANCELED])),
                         Select::make('result_package_id')
                             ->label(__('inventories::filament/clusters/operations/resources/operation.form.tabs.operations.fields.lines.fields.package'))

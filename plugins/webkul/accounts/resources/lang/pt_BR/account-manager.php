@@ -12,6 +12,7 @@ return [
         'lines-required'       => 'Adicione pelo menos uma linha à fatura.',
         'draft-state-required' => 'Somente faturas em rascunho podem ser confirmadas.',
         'journal-archived'     => 'Você não pode confirmar uma fatura com um diário arquivado.',
+        'unbalanced'           => 'Este lançamento contábil está desbalanceado e não pode ser lançado. O total de débito deve ser igual ao total de crédito.',
     ],
 
     'documents' => [
@@ -36,6 +37,9 @@ return [
             'subtotal'              => 'Subtotal',
             'tax'                   => 'Imposto',
             'discount'              => 'Desconto',
+            'discount-percentage'   => 'Desc. %',
+            'taxes'                 => 'Impostos',
+            'amount'                => 'Valor',
             'grand-total'           => 'Total geral',
             'payment-information'   => 'Informações de pagamento',
             'payment-communication' => 'Comunicação de pagamento',

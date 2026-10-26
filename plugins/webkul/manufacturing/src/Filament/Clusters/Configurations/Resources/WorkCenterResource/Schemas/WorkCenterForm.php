@@ -36,7 +36,7 @@ class WorkCenterForm
                                     ->maxLength(255)
                                     ->autofocus()
                                     ->placeholder(__('manufacturing::filament/clusters/configurations/resources/work-center.form.sections.general.fields.name-placeholder'))
-                                    ->extraInputAttributes(['style' => 'font-size: 1.5rem;height: 3rem;'])
+                                    ->extraInputAttributes(['style' => 'font-size: 1.25rem;height: 2.5rem;'])
                                     ->columnSpanFull(),
 
                                 TextInput::make('code')
@@ -79,7 +79,10 @@ class WorkCenterForm
 
                                 Select::make('calendar_id')
                                     ->label(__('manufacturing::filament/clusters/configurations/resources/work-center.form.sections.general.fields.calendar'))
-                                    ->options(fn (): array => Calendar::withTrashed()->pluck('name', 'id')->all())
+                                    ->options(fn ($state): array => Calendar::withTrashed()
+                                        ->where(hide_deleted_unless_selected($state))
+                                        ->pluck('name', 'id')
+                                        ->all())
                                     ->searchable()
                                     ->preload()
                                     ->required(),
@@ -133,15 +136,9 @@ class WorkCenterForm
                                             ->relationship(
                                                 'product',
                                                 'name',
-                                                modifyQueryUsing: fn (Builder $query, Get $get, ?string $state) => $query
+                                                modifyQueryUsing: fn (Builder $query, Get $get, $state) => $query
                                                     ->withTrashed()
-                                                    ->where(function (Builder $q) use ($state) {
-                                                        $q->whereNull('deleted_at');
-
-                                                        if (filled($state)) {
-                                                            $q->orWhere('id', $state);
-                                                        }
-                                                    })
+                                                    ->where(hide_deleted_unless_selected($state))
                                                     ->where(owned_by_company($get('../../company_id'))),
                                             )
                                             ->searchable()

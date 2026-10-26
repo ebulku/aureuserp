@@ -84,7 +84,7 @@ jobs:
         with:
           php-version: ${{ matrix.php-versions }}
           extensions: curl, fileinfo, gd, intl, mbstring, openssl, pdo, ${{ matrix.php-db-ext }}, tokenizer, zip
-          ini-values: error_reporting=E_ALL
+          ini-values: error_reporting=E_ALL, max_execution_time=0
           tools: composer:v2
 
       - name: Set Up Node.js
@@ -171,6 +171,12 @@ jobs:
             --admin-email="admin@example.com" \
             --admin-password="admin123"
 
+      - name: Switch to Production Mode
+        run: |
+          sed -i "s|^\(APP_ENV=\s*\).*$|\1production|" .env
+          sed -i "/URL::forceScheme('https');/s|^|//|" app/Providers/AppServiceProvider.php
+          php artisan config:clear
+
       - name: Start Laravel server
         run: |
           php artisan serve --host=0.0.0.0 --port=8000 > server.log 2>&1 &
@@ -180,6 +186,7 @@ jobs:
       - name: Run All Playwright Tests
         env:
           BASE_URL: "http://127.0.0.1:8000"
+          PW_JSON_REPORT_FILE: "./test-results-${{ matrix.db }}-${{ matrix.shard_index }}.json"
         run: |
           npx playwright test --config=playwright.config.ts --shard=${{ matrix.shard_index }}/${{ matrix.shard_total }}
         working-directory: tests/e2e-pw
@@ -199,8 +206,9 @@ jobs:
           name: playwright-failures-${{ matrix.db }}-${{ matrix.shard_index }}-${{ github.run_id }}-${{ github.run_number }}
           path: |
             tests/e2e-pw/test-results
+            tests/e2e-pw/test-results-*.json
             storage/logs/laravel.log
-          retention-days: 1
+          retention-days: 7
 
   merge_playwright_reports:
     if: ${{ always() && !cancelled() }}
@@ -246,5 +254,5 @@ jobs:
         with:
           name: playwright-report-${{ matrix.db }}-${{ github.run_id }}-${{ github.run_number }}
           path: tests/e2e-pw/playwright-report
-          retention-days: 1
+          retention-days: 7
 

@@ -49,7 +49,7 @@ class TaskForm
                                     ->maxLength(255)
                                     ->autofocus()
                                     ->placeholder(__('projects::filament/resources/task.form.sections.general.fields.title-placeholder'))
-                                    ->extraInputAttributes(['style' => 'font-size: 1.5rem;height: 3rem;']),
+                                    ->extraInputAttributes(['style' => 'font-size: 1.25rem;height: 2.5rem;']),
                                 ToggleButtons::make('state')
                                     ->required()
                                     ->default(TaskState::IN_PROGRESS)
@@ -93,7 +93,7 @@ class TaskForm
                             ->schema([
                                 Select::make('project_id')
                                     ->label(__('projects::filament/resources/task.form.sections.settings.fields.project'))
-                                    ->relationship('project', 'name', modifyQueryUsing: fn (Builder $query) => $query->withTrashed())
+                                    ->relationship('project', 'name', modifyQueryUsing: fn (Builder $query, $state) => $query->withTrashed()->where(hide_deleted_unless_selected($state)))
                                     ->getOptionLabelFromRecordUsing(function (Model $record): string {
                                         return $record->name.($record->trashed() ? ' (Deleted)' : '');
                                     })

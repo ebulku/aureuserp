@@ -12,6 +12,7 @@ return [
         'lines-required'       => 'يرجى إضافة سطر واحد على الأقل إلى الفاتورة.',
         'draft-state-required' => 'يمكن تأكيد الفواتير في حالة المسودة فقط.',
         'journal-archived'     => 'لا يمكنك تأكيد فاتورة بيوميات مؤرشفة.',
+        'unbalanced'           => 'هذا القيد اليومي غير متوازن ولا يمكن ترحيله. يجب أن يساوي إجمالي المدين إجمالي الدائن.',
     ],
 
     'documents' => [
@@ -36,6 +37,9 @@ return [
             'subtotal'              => 'المجموع الفرعي',
             'tax'                   => 'الضريبة',
             'discount'              => 'الخصم',
+            'discount-percentage'   => 'الخصم %',
+            'taxes'                 => 'الضرائب',
+            'amount'                => 'المبلغ',
             'grand-total'           => 'الإجمالي العام',
             'payment-information'   => 'معلومات الدفع',
             'payment-communication' => 'بيان الدفع',

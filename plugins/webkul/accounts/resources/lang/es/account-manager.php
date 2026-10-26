@@ -12,6 +12,7 @@ return [
         'lines-required'       => 'Agregue al menos una línea a la factura.',
         'draft-state-required' => 'Solo se pueden confirmar las facturas en estado borrador.',
         'journal-archived'     => 'No se puede confirmar una factura con un diario archivado.',
+        'unbalanced'           => 'Este asiento contable está descuadrado y no se puede contabilizar. El total del debe debe ser igual al total del haber.',
     ],
 
     'documents' => [
@@ -36,6 +37,9 @@ return [
             'subtotal'              => 'Subtotal',
             'tax'                   => 'Impuesto',
             'discount'              => 'Descuento',
+            'discount-percentage'   => 'Dto. %',
+            'taxes'                 => 'Impuestos',
+            'amount'                => 'Importe',
             'grand-total'           => 'Total general',
             'payment-information'   => 'Información de pago',
             'payment-communication' => 'Comunicación de pago',

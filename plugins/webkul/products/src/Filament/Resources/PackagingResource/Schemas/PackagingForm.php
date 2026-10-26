@@ -8,7 +8,10 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Webkul\Product\Models\Packaging;
 use Webkul\Product\Models\Product;
+use Webkul\Product\Rules\UniqueBarcode;
 
 class PackagingForm
 {
@@ -22,14 +25,16 @@ class PackagingForm
                     ->maxLength(255),
                 TextInput::make('barcode')
                     ->label(__('products::filament/resources/packaging.form.barcode'))
+                    ->rule(fn (Get $get, ?Model $record): UniqueBarcode => new UniqueBarcode($get('company_id'), $record, Packaging::class))
                     ->maxLength(255),
                 Select::make('product_id')
                     ->label(__('products::filament/resources/packaging.form.product'))
                     ->relationship(
                         'product',
                         'name',
-                        modifyQueryUsing: fn (Builder $query, Get $get) => $query
+                        modifyQueryUsing: fn (Builder $query, Get $get, $state) => $query
                             ->withTrashed()
+                            ->where(hide_deleted_unless_selected($state))
                             ->where('type', 'goods')
                             ->where(owned_by_company($get('company_id')))
                             ->orderBy('id'),

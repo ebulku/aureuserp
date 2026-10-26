@@ -30,13 +30,14 @@ class RouteForm
                             ->maxLength(255)
                             ->autofocus()
                             ->placeholder(__('inventories::filament/clusters/configurations/resources/route.form.sections.general.fields.route-placeholder'))
-                            ->extraInputAttributes(['style' => 'font-size: 1.5rem;height: 3rem;']),
+                            ->extraInputAttributes(['style' => 'font-size: 1.25rem;height: 2.5rem;']),
                         Select::make('company_id')
                             ->label(__('inventories::filament/clusters/configurations/resources/route.form.sections.general.fields.company'))
                             ->relationship(
                                 name: 'company',
                                 titleAttribute: 'name',
-                                modifyQueryUsing: fn (Builder $query) => $query->withTrashed(),
+                                modifyQueryUsing: fn (Builder $query, $state) => $query->withTrashed()
+                                    ->where(hide_deleted_unless_selected($state)),
                             )
                             ->getOptionLabelFromRecordUsing(
                                 fn (Model $record): string => $record->name.($record->trashed() ? ' (Deleted)' : ''),

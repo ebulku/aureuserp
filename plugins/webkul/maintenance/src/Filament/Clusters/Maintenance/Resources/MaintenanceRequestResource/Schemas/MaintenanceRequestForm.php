@@ -55,15 +55,16 @@ class MaintenanceRequestForm
                                     ->disabledOn('edit')
                                     ->autofocus()
                                     ->placeholder(__('maintenance::filament/clusters/maintenance/resources/maintenance-request.form.sections.request.fields.name-placeholder'))
-                                    ->extraInputAttributes(['style' => 'font-size: 1.5rem;height: 3rem;']),
+                                    ->extraInputAttributes(['style' => 'font-size: 1.25rem;height: 2.5rem;']),
 
                                 Select::make('equipment_id')
                                     ->label(__('maintenance::filament/clusters/maintenance/resources/maintenance-request.form.sections.request.fields.equipment'))
                                     ->relationship(
                                         'equipment',
                                         'name',
-                                        modifyQueryUsing: fn (Builder $query, Get $get) => $query
+                                        modifyQueryUsing: fn (Builder $query, Get $get, $state) => $query
                                             ->withTrashed()
+                                            ->where(hide_deleted_unless_selected($state))
                                             ->where(owned_by_company($get('company_id'))),
                                     )
                                     ->getOptionLabelFromRecordUsing(function (Model $record): string {
@@ -210,8 +211,9 @@ class MaintenanceRequestForm
                                     ->relationship(
                                         'team',
                                         'name',
-                                        modifyQueryUsing: fn (Builder $query, Get $get) => $query
+                                        modifyQueryUsing: fn (Builder $query, Get $get, $state) => $query
                                             ->withTrashed()
+                                            ->where(hide_deleted_unless_selected($state))
                                             ->where(owned_by_company($get('company_id'))),
                                     )
                                     ->getOptionLabelFromRecordUsing(function (Model $record): string {
